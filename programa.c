@@ -68,8 +68,8 @@ MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
 
 
-int aux_comp = INT_MIN;
-int diferenca = INT_MIN;
+int dif,aux_dif,aux_linha_menor,aux_coluna_menor,aux_valor_maior,aux_valor_menor = INT_MIN;
+
 int pos_i, pos_j;
 for (i = 0; i < tam; i++) {
 	for (j = 0; j < tam; j++) {
@@ -77,16 +77,23 @@ for (i = 0; i < tam; i++) {
 			calc_diferenca(matriz, i, j,&linha_menor_aux,&coluna_menor_aux,&valor_maior_aux,&valor_menor_aux);
 		}
 		else if(myrank ==0) {
-			MPI_Recv(&aux_comp, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
-			MPI_Recv(&linha_menor, 1, MPI_INT, MPI_ANY_SOURCE, 2, MPI_COMM_WORLD, &status);
-			MPI_Recv(&coluna_menor, 1, MPI_INT, MPI_ANY_SOURCE, 3, MPI_COMM_WORLD, &status);
-			MPI_Recv(&valor_maior, 1, MPI_INT, MPI_ANY_SOURCE, 4, MPI_COMM_WORLD, &status);
-			MPI_Recv(&valor_menor, 1, MPI_INT, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD, &status);
+			MPI_Recv(&aux_dif, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+			MPI_Recv(&aux_linha_menor, 1, MPI_INT, MPI_ANY_SOURCE, 2, MPI_COMM_WORLD, &status);
+			MPI_Recv(&aux_coluna_menor, 1, MPI_INT, MPI_ANY_SOURCE, 3, MPI_COMM_WORLD, &status);
+			MPI_Recv(&aux_valor_maior, 1, MPI_INT, MPI_ANY_SOURCE, 4, MPI_COMM_WORLD, &status);
+			MPI_Recv(&aux_valor_menor, 1, MPI_INT, MPI_ANY_SOURCE, 5, MPI_COMM_WORLD, &status);
 
-			if (diferenca < aux_comp){
-				diferenca = aux_comp;
-				linha_maior=i;
-				coluna_maior=j;
+//			if (diferenca < aux_comp){
+//				diferenca = aux_comp;
+//				linha_maior=i;
+//				coluna_maior=j;
+//			}
+			if (aux_dif > dif){
+				dif = aux_dif;
+				linha_menor=aux_linha_menor;
+				coluna_menor=aux_coluna_menor;
+				valor_maior=aux_valor_maior;
+				valor_menor=aux_valor_menor;
 			}
 
 
