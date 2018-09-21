@@ -101,28 +101,28 @@ int main(int argc, char *argv[]) {
 
     int dif = INT_MIN;
 
-    for (i = 0; i < tam; i++) {
-        for (j = 0; j < tam; j++) {
+    if (myrank == 0) {
+        int mensagem[MSG_SIZE];
 
-            if (myrank == 0) {
-                int mensagem[MSG_SIZE];
+        for (i = 0; i < tam*tam; i++) {
+            MPI_Recv(mensagem, MSG_SIZE, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
 
-                MPI_Recv(mensagem, MSG_SIZE, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
-
-                if (dif < mensagem[DIF]) {
-                    dif = mensagem[DIF];
-                    linha_maior = mensagem[LINHA_MAIOR];
-                    coluna_maior = mensagem[COLUNA_MAIOR];
-                    linha_menor = mensagem[LINHA_MENOR];
-                    coluna_menor = mensagem[COLUNA_MENOR];
-                    valor_maior = mensagem[VALOR_MAIOR];
-                    valor_menor = mensagem[VALOR_MENOR];
-                }
-            } else {
-                if (myrank == (((i*tam + j) % (npes-1)) + 1)) {
-                    calc_diferenca(matriz, tam, i, j);
-                }
+            if (dif < mensagem[DIF]) {
+                dif = mensagem[DIF];
+                linha_maior = mensagem[LINHA_MAIOR];
+                coluna_maior = mensagem[COLUNA_MAIOR];
+                linha_menor = mensagem[LINHA_MENOR];
+                coluna_menor = mensagem[COLUNA_MENOR];
+                valor_maior = mensagem[VALOR_MAIOR];
+                valor_menor = mensagem[VALOR_MENOR];
             }
+        }
+    } else {
+        int k;
+        for (k = myrank-1; k < tam*tam; k += npes-1) {
+            i = k / tam;
+            j = k % tam;
+            calc_diferenca(matriz, tam, i, j);
         }
     }
 
