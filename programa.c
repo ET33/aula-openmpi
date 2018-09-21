@@ -1,3 +1,4 @@
+// Grupo 6
 // 5248962 Edylson Torikai
 // 4471070 Fernanda Tostes
 // 8531289 Guilherme Amorim Menegali
@@ -7,10 +8,12 @@
 
 /*
 Particionamento
-Cada tarefa procura a maior diferença entre um elemento e seus vizinhos 
+Cada tarefa procura a maior diferença entre um elemento e seus vizinhos;
+E juntar as diferenças encontradas e encontrar a maior entre elas.
 
 Comunicação
-A comunicação acontece ao se agrupar todas as diferenças encontradas no processo principal
+A comunicação acontece ao se agrupar todas as diferenças encontradas no
+processo principal (myrank 0)
 
 Aglomeração
 A aglomeração depende da quantidade de processos estabelecidos e da ordem N da matriz.
