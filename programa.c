@@ -1,3 +1,4 @@
+// Grupo 6
 // 5248962 Edylson Torikai
 // 4471070 Fernanda Tostes
 // 8531289 Guilherme Amorim Menegali
@@ -7,10 +8,12 @@
 
 /*
 Particionamento
-Cada tarefa procura a maior diferença entre um elemento e seus vizinhos 
+Cada tarefa procura a maior diferença entre um elemento e seus vizinhos;
+E juntar as diferenças encontradas e encontrar a maior entre elas.
 
 Comunicação
-A comunicação acontece ao se agrupar todas as diferenças encontradas no processo principal
+A comunicação acontece ao se agrupar todas as diferenças encontradas no
+processo principal (myrank 0)
 
 Aglomeração
 A aglomeração depende da quantidade de processos estabelecidos e da ordem N da matriz.
@@ -20,111 +23,124 @@ Mapeamento
 O mapeamento é de acordo com o numero de processadores disponibilizados.
 */
 
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <limits.h>
-#include <math.h>
 #include <mpi.h>
 
-void calc_diferenca(int **matriz, int linha_maior, int coluna_maior) {
-	int linha_menor, coluna_menor, valor_maior, valor_menor;
-	int dif = INT_MIN, aux_dif = INT_MIN;
-	int i, j;
-	int mensagem[5];
+#define          DIF 0
+#define  LINHA_MAIOR 1
+#define COLUNA_MAIOR 2
+#define  LINHA_MENOR 3
+#define COLUNA_MENOR 4
+#define  VALOR_MAIOR 5
+#define  VALOR_MENOR 6
+#define     MSG_SIZE 7
 
-	for (i = linha_maior - 1; i < linha_maior + 2; i++) {
-		for (j = coluna_maior - 1; j < coluna_maior + 2; j++) {
-		
-			if (!(i < 0 || i > linha_maior || j < 0 || j > coluna_maior)) {
-				aux_dif = abs(matriz[linha_maior][coluna_maior] - matriz[i][j]);
-				if (aux_dif > dif) {
-					dif = aux_dif;
-					linha_menor= i;
-					coluna_menor= j;
-					valor_maior = matriz[linha_maior][coluna_maior];
-					valor_menor = matriz[i][j];
-				}
-			}
-		}	
-	}
+void calc_diferenca(int **matriz, int tam, int linha_maior, int coluna_maior) {
+    int linha_menor, coluna_menor,
+        valor_maior, valor_menor;
+    int dif, aux_dif;
+    int i, j;
+    int mensagem[MSG_SIZE];
 
-	mensagem[0] = dif;
-	mensagem[1] = linha_menor;
-	mensagem[2] = coluna_menor;
-	mensagem[3] = valor_maior;
-	mensagem[4] = valor_menor;
+    aux_dif = dif = INT_MIN;
 
-	MPI_Send(mensagem, 5, MPI_INT, 0, 1, MPI_COMM_WORLD);
+    for (i = linha_maior - 1; i < linha_maior + 2; i++) {
+        for (j = coluna_maior - 1; j < coluna_maior + 2; j++) {
+            if (!(i < 0 || i >= tam || j < 0 || j >= tam)) {
+                aux_dif = matriz[linha_maior][coluna_maior] - matriz[i][j];
+
+                if (aux_dif > dif) {
+                    dif = aux_dif;
+                    linha_menor = i;
+                    coluna_menor = j;
+                    valor_maior = matriz[linha_maior][coluna_maior];
+                    valor_menor = matriz[i][j];
+                }
+            }
+        }	
+    }
+
+    mensagem[DIF] = dif;
+    mensagem[LINHA_MAIOR] = linha_maior;
+    mensagem[COLUNA_MAIOR] = coluna_maior;
+    mensagem[LINHA_MENOR] = linha_menor;
+    mensagem[COLUNA_MENOR] = coluna_menor;
+    mensagem[VALOR_MAIOR] = valor_maior;
+    mensagem[VALOR_MENOR] = valor_menor;
+
+    MPI_Send(mensagem, MSG_SIZE, MPI_INT, 0, 1, MPI_COMM_WORLD);
 }
 
 int main(int argc, char *argv[]) {
-	int **matriz, tam, i, j = 0;
-	int linha_menor, coluna_menor, linha_maior, coluna_maior, valor_maior, valor_menor = 0;
-	FILE *arquivo_entrada;
+    int **matriz, tam, i, j;
+    int linha_menor, coluna_menor,
+        linha_maior, coluna_maior,
+        valor_maior, valor_menor;
+    FILE *arquivo_entrada;
 
-	arquivo_entrada = fopen("BCC_TB_numeros.txt", "r");
-	fscanf(arquivo_entrada, "%d\n", &tam);
-	matriz = (int **) malloc(tam * sizeof(int *));
+    arquivo_entrada = fopen("BCC_TB_numeros.txt", "r");
+    fscanf(arquivo_entrada, "%d\n", &tam);
+    matriz = (int **) malloc(tam * sizeof(int *));
 
-	for(i = 0; i < tam; i++) {
-		matriz[i] = (int*) malloc(tam*sizeof(int));
-	}
+    for (i = 0; i < tam; i++) {
+        matriz[i] = (int *) malloc(tam * sizeof(int));
+    }
 
-	for(i = 0; i < tam; i++) {
-		for(j = 0; j < tam; j++) {
-			fscanf(arquivo_entrada, "%d\n", &(matriz[i][j]));
-		}
-	}
+    for (i = 0; i < tam; i++) {
+        for (j = 0; j < tam; j++) {
+            fscanf(arquivo_entrada, "%d\n", &(matriz[i][j]));
+        }
+    }
 
-	int mensagem[5];
-	int npes;
-	int myrank;
-	MPI_Status status;
+    int npes;
+    int myrank;
+    MPI_Status status;
+    MPI_Init(&argc, &argv);
 
-	MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &npes);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-	MPI_Comm_size(MPI_COMM_WORLD, &npes);
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    int dif = INT_MIN;
 
-	int aux_comp = INT_MIN;
-	int diferenca = INT_MIN;
-	int pos_i, pos_j;
+    if (myrank == 0) {
+        int mensagem[MSG_SIZE];
 
-	for (i = 0; i < tam; i++) {
-		for (j = 0; j < tam; j++) {
+        for (i = 0; i < tam*tam; i++) {
+            MPI_Recv(mensagem, MSG_SIZE, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
 
-			if (myrank == 0) {
-				MPI_Recv(mensagem, 5, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+            if (dif < mensagem[DIF]) {
+                dif = mensagem[DIF];
+                linha_maior = mensagem[LINHA_MAIOR];
+                coluna_maior = mensagem[COLUNA_MAIOR];
+                linha_menor = mensagem[LINHA_MENOR];
+                coluna_menor = mensagem[COLUNA_MENOR];
+                valor_maior = mensagem[VALOR_MAIOR];
+                valor_menor = mensagem[VALOR_MENOR];
+            }
+        }
+    } else {
+        int k;
+        for (k = myrank-1; k < tam*tam; k += npes-1) {
+            i = k / tam;
+            j = k % tam;
+            calc_diferenca(matriz, tam, i, j);
+        }
+    }
 
-				if (diferenca < mensagem[0]) {
-					diferenca = mensagem[0];
-					linha_maior = i;
-					coluna_maior = j;
-					linha_menor = mensagem[1];
-					coluna_menor = mensagem[2];
-					valor_maior = mensagem[3];
-					valor_menor = mensagem[4];
-				}
-			} else {
-				if (myrank == (((i*tam + j) % (npes-1)) + 1)) {
-					calc_diferenca(matriz, i, j);
-				}
-			}
-		}
-	}
+    MPI_Finalize();
 
-	MPI_Finalize();
+    if (myrank == 0) {
+        printf("M[%d,%d]=%d M[%d,%d]=%d", linha_maior, coluna_maior, valor_maior,
+                                          linha_menor, coluna_menor, valor_menor);
+    }
 
-	if (myrank == 0) {
-		printf("M[%d,%d]=%d M[%d,%d]=%d\n", linha_maior, coluna_maior, valor_maior,
-											linha_menor, coluna_menor, valor_menor);
-	}
+    for (i = 0; i < tam; i++) {
+        free(matriz[i]);
+    }
+    free(matriz);
+    fclose(arquivo_entrada);
 
-	for (i = 0; i < tam; i++) {
-		free(matriz[j]);
-	}
-	free(matriz);
-	fclose(arquivo_entrada);
-
-	return 0;
+    return 0;
 }
