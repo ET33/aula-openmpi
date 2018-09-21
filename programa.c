@@ -113,8 +113,8 @@ int main(int argc, char *argv[]) {
 	MPI_Finalize();
 
 	if (myrank == 0) {
-		printf("M[%d,%d]=%d M[%d,%d]=%d\n", linha_maior, coluna_maior, valor_maior,
-											linha_menor, coluna_menor, valor_menor);
+		printf("M[%d,%d]=%d M[%d,%d]=%d", linha_maior, coluna_maior, valor_maior,
+										  linha_menor, coluna_menor, valor_menor);
 	}
 
 	for (i = 0; i < tam; i++) {
@@ -122,7 +122,6 @@ int main(int argc, char *argv[]) {
 	}
 	free(matriz);
 	fclose(arquivo_entrada);
-
 
 	return 0;
 }
