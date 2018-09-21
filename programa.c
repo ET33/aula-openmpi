@@ -23,7 +23,6 @@ O mapeamento é de acordo com o numero de processadores disponibilizados.
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
-#include <math.h>
 #include <mpi.h>
 
 void calc_diferenca(int **matriz, int tam, int linha_maior, int coluna_maior) {
