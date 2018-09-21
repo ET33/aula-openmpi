@@ -190,6 +190,7 @@ int main(int argc, char *argv[])
 //    ordena_colunas(M, L, C);
     int npes;
     int myrank;
+    float mediana[1];
     MPI_Status status;
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &npes);
@@ -199,36 +200,46 @@ int main(int argc, char *argv[])
         //manda o endereco do primeiro elemento da coluna, limites inf e sup e a largura da matriz
         if (myrank != 0) {
             if (myrank == (((j) % (npes - 1)) + 1)) {
-                printf("#%d > col=%d\n",myrank,j);
+                printf("#%d > col=%d\n", myrank, j);
                 quicksort(&M[j], 0, L - 1, C);
                 calcula_mediana(M, vet, L, C);
-                printf("#%d > mediana da col %d = %.1f,\n",myrank,j,vet[j]);
+                printf("#%d > mediana da col %d = %.1f,\n", myrank, j, vet[j]);
+                mediana[0]=vet[j];
+                MPI_Send(mediana, 1, MPI_FLOAT, 0, 1, MPI_COMM_WORLD);
             }
         }
+            else if(myrank==0)
+            {
+                MPI_Recv(mediana, 1, MPI_FLOAT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                vet[j]=mediana[0];
+                printf("#%d > mediana da col %d = %.1f,\n",myrank,j,vet[j]);
+            }
     }
 
-    MPI_Finalize();
 
-    printf("Matriz com colunas ordenadas:\n");
+
+    //printf("Matriz com colunas ordenadas:\n");
     // impressao para verificacao apenas
-    for(i=0; i<L; i++)
-    {
-      for(j=0; j<C; j++)
-	  printf("%d	", M[i*C+j]);
-      printf("\n");
-    }
+//    for(i=0; i<L; i++)
+//    {
+//      for(j=0; j<C; j++)
+//	  printf("%d	", M[i*C+j]);
+//      printf("\n");
+//    }
 
 //    calcula_mediana(M, vet, L, C);
-
-    for(j=0; j<C; j++)
-        fprintf(arquivo_saida,"%.1f, ",vet[j]);
-    fprintf(arquivo_saida, "\n");
-
+    if(myrank==0) {
+        for (j = 0; j < C; j++)
+            fprintf(arquivo_saida, "%.1f, ", vet[j]);
+        fprintf(arquivo_saida, "\n");
+    }
     fclose(arquivo_entrada);
     fclose(arquivo_saida);
 
     free(vet);
     free(M);
+
+    MPI_Finalize();
 
     return(0);
 
