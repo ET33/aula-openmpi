@@ -20,13 +20,13 @@ Mapeamento
 O mapeamento é de acordo com o numero de processadores disponibilizados.
 */
 
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <limits.h>
 #include <math.h>
 #include <mpi.h>
 
-void calc_diferenca(int **matriz, int linha_maior, int coluna_maior) {
+void calc_diferenca(int **matriz, int tam, int linha_maior, int coluna_maior) {
 	int linha_menor, coluna_menor, valor_maior, valor_menor;
 	int dif = INT_MIN, aux_dif = INT_MIN;
 	int i, j;
@@ -34,13 +34,12 @@ void calc_diferenca(int **matriz, int linha_maior, int coluna_maior) {
 
 	for (i = linha_maior - 1; i < linha_maior + 2; i++) {
 		for (j = coluna_maior - 1; j < coluna_maior + 2; j++) {
-		
-			if (!(i < 0 || i > linha_maior || j < 0 || j > coluna_maior)) {
-				aux_dif = abs(matriz[linha_maior][coluna_maior] - matriz[i][j]);
+			if (!(i < 0 || i >= tam || j < 0 || j >= tam)) {
+				aux_dif = matriz[linha_maior][coluna_maior] - matriz[i][j];
 				if (aux_dif > dif) {
 					dif = aux_dif;
-					linha_menor= i;
-					coluna_menor= j;
+					linha_menor = i;
+					coluna_menor = j;
 					valor_maior = matriz[linha_maior][coluna_maior];
 					valor_menor = matriz[i][j];
 				}
@@ -58,20 +57,20 @@ void calc_diferenca(int **matriz, int linha_maior, int coluna_maior) {
 }
 
 int main(int argc, char *argv[]) {
-	int **matriz, tam, i, j = 0;
-	int linha_menor, coluna_menor, linha_maior, coluna_maior, valor_maior, valor_menor = 0;
+	int **matriz, tam, i, j;
+	int linha_menor, coluna_menor, linha_maior, coluna_maior, valor_maior, valor_menor;
 	FILE *arquivo_entrada;
 
 	arquivo_entrada = fopen("BCC_TB_numeros.txt", "r");
 	fscanf(arquivo_entrada, "%d\n", &tam);
 	matriz = (int **) malloc(tam * sizeof(int *));
 
-	for(i = 0; i < tam; i++) {
+	for (i = 0; i < tam; i++) {
 		matriz[i] = (int*) malloc(tam*sizeof(int));
 	}
 
-	for(i = 0; i < tam; i++) {
-		for(j = 0; j < tam; j++) {
+	for (i = 0; i < tam; i++) {
+		for (j = 0; j < tam; j++) {
 			fscanf(arquivo_entrada, "%d\n", &(matriz[i][j]));
 		}
 	}
@@ -86,9 +85,7 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_size(MPI_COMM_WORLD, &npes);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-	int aux_comp = INT_MIN;
 	int diferenca = INT_MIN;
-	int pos_i, pos_j;
 
 	for (i = 0; i < tam; i++) {
 		for (j = 0; j < tam; j++) {
@@ -107,7 +104,7 @@ int main(int argc, char *argv[]) {
 				}
 			} else {
 				if (myrank == (((i*tam + j) % (npes-1)) + 1)) {
-					calc_diferenca(matriz, i, j);
+					calc_diferenca(matriz, tam, i, j);
 				}
 			}
 		}
@@ -121,10 +118,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	for (i = 0; i < tam; i++) {
-		free(matriz[j]);
+		free(matriz[i]);
 	}
 	free(matriz);
 	fclose(arquivo_entrada);
+
 
 	return 0;
 }
