@@ -29,7 +29,7 @@ void calc_diferenca(int **matriz, int tam, int linha_maior, int coluna_maior) {
 	int linha_menor, coluna_menor, valor_maior, valor_menor;
 	int dif = INT_MIN, aux_dif = INT_MIN;
 	int i, j;
-	int mensagem[5];
+	int mensagem[7];
 
 	for (i = linha_maior - 1; i < linha_maior + 2; i++) {
 		for (j = coluna_maior - 1; j < coluna_maior + 2; j++) {
@@ -47,12 +47,14 @@ void calc_diferenca(int **matriz, int tam, int linha_maior, int coluna_maior) {
 	}
 
 	mensagem[0] = dif;
-	mensagem[1] = linha_menor;
-	mensagem[2] = coluna_menor;
-	mensagem[3] = valor_maior;
-	mensagem[4] = valor_menor;
+	mensagem[1] = linha_maior;
+	mensagem[2] = coluna_maior;
+	mensagem[3] = linha_menor;
+	mensagem[4] = coluna_menor;
+	mensagem[5] = valor_maior;
+	mensagem[6] = valor_menor;
 
-	MPI_Send(mensagem, 5, MPI_INT, 0, 1, MPI_COMM_WORLD);
+	MPI_Send(mensagem, 7, MPI_INT, 0, 1, MPI_COMM_WORLD);
 }
 
 int main(int argc, char *argv[]) {
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]) {
 	matriz = (int **) malloc(tam * sizeof(int *));
 
 	for (i = 0; i < tam; i++) {
-		matriz[i] = (int*) malloc(tam*sizeof(int));
+		matriz[i] = (int *) malloc(tam * sizeof(int));
 	}
 
 	for (i = 0; i < tam; i++) {
@@ -74,7 +76,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	int mensagem[5];
+	int mensagem[7];
 	int npes;
 	int myrank;
 	MPI_Status status;
@@ -90,16 +92,25 @@ int main(int argc, char *argv[]) {
 		for (j = 0; j < tam; j++) {
 
 			if (myrank == 0) {
-				MPI_Recv(mensagem, 5, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+				MPI_Recv(mensagem, 7, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+
+				// TODO: remover depois
+				printf("Mensagem recebida.\nDiferenca: %d\nMaior:\n  Valor: %d\n  Posicao: [%d,%d]\nMenor:\n  Valor: %d\n  Posicao: [%d,%d]\n---\n",
+					mensagem[0],
+					mensagem[5],
+					mensagem[1], mensagem[2],
+					mensagem[6],
+					mensagem[3], mensagem[4]
+				);
 
 				if (diferenca < mensagem[0]) {
-					diferenca = mensagem[0];
-					linha_maior = i;
-					coluna_maior = j;
-					linha_menor = mensagem[1];
-					coluna_menor = mensagem[2];
-					valor_maior = mensagem[3];
-					valor_menor = mensagem[4];
+					diferenca    = mensagem[0];
+					linha_maior  = mensagem[1];
+					coluna_maior = mensagem[2];
+					linha_menor  = mensagem[3];
+					coluna_menor = mensagem[4];
+					valor_maior  = mensagem[5];
+					valor_menor  = mensagem[6];
 				}
 			} else {
 				if (myrank == (((i*tam + j) % (npes-1)) + 1)) {
